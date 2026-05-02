@@ -2,6 +2,9 @@
 
 A local-first, AI-powered incident response orchestration system.
 
+<img width="1533" height="361" alt="aicommander" src="https://github.com/user-attachments/assets/6cc64c2e-6d61-4203-a988-1fc6ff65c1c2" />
+
+
 ## Features
 - **Local LLM**: Powered by Ollama (llama3.2).
 - **Orchestration**: n8n visual workflows.
