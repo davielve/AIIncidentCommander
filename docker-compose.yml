@@ -1,0 +1,60 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ai_incident_ollama
+    volumes:
+      - ollama_data:/root/.ollama
+    ports:
+      - "11435:11434"
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - incident_network
+
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: ai_incident_n8n
+    ports:
+      - "${N8N_PORT:-5678}:5678"
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=${N8N_BASIC_AUTH_ACTIVE}
+      - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
+      - WEBHOOK_URL=http://localhost:${N8N_PORT:-5678}/
+      - N8N_BLOCK_FS_WRITE_ACCESS=false
+      - N8N_FS_ALLOWED_PATH=/home/node/.n8n-files
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ${PROJECT_DATA_PATH:-./data}:/home/node/.n8n-files
+    depends_on:
+      ollama:
+        condition: service_healthy
+    networks:
+      - incident_network
+
+  mock-api:
+    build: ./services/mock-api
+    container_name: ai_incident_mock_api
+    ports:
+      - "8000:8000"
+    networks:
+      - incident_network
+
+  log-generator:
+    build: ./services/log-generator
+    container_name: ai_incident_log_generator
+    volumes:
+      - ${PROJECT_DATA_PATH:-./data}:/data
+    networks:
+      - incident_network
+
+networks:
+  incident_network:
+    driver: bridge
+
+volumes:
+  ollama_data:
+  n8n_data:
